@@ -736,11 +736,26 @@ public class ExtensionLoader<T> {
                     type + ", class line: " + clazz.getName() + "), class "
                     + clazz.getName() + " is not subtype of interface.");
         }
+        /**
+         * 判断类实现（如：DubboProtocol）上有米有打上@Adaptive注解，
+         * 如果打上了注解，将此类作为Protocol协议的设配类缓存起来，读取下一行
+         */
         if (clazz.isAnnotationPresent(Adaptive.class)) {
             cacheAdaptiveClass(clazz);
-        } else if (isWrapperClass(clazz)) {
+        }
+        /**
+         * 判断实现类是否存在入参为接口的构造器（就是DubbboProtocol类是否还有入参为Protocol的构造器）
+         * 有的话作为包装类缓存到此ExtensionLoader的Set<Class<?>>集合中
+         */
+        else if (isWrapperClass(clazz)) {
             cacheWrapperClass(clazz);
-        } else {
+        }
+        /**
+         * 如果即不是设配对象也不是wrapped的对象，那就是扩展点的具体实现对象
+         * 查找实现类上有没有打上@Activate注解，有缓存到变量cachedActivates的map
+         * 将实现类缓存到cachedClasses中，以便于使用时获取
+         */
+        else {
             clazz.getConstructor();
             if (StringUtils.isEmpty(name)) {
                 name = findAnnotationName(clazz);
@@ -748,7 +763,6 @@ public class ExtensionLoader<T> {
                     throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + resourceURL);
                 }
             }
-
             String[] names = NAME_SEPARATOR.split(name);
             if (ArrayUtils.isNotEmpty(names)) {
                 cacheActivateClass(clazz, names[0]);
@@ -863,16 +877,25 @@ public class ExtensionLoader<T> {
 
     private Class<?> getAdaptiveExtensionClass() {
         getExtensionClasses();
+        /**
+         * 如果cachedAdaptiveClass有值，说明有且仅有一个实现类打了@Adaptive, 实例化这个对象返回
+         */
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
+        /**
+         *  如果cachedAdaptiveClass为空， 创建设配类字节码
+         */
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
     private Class<?> createAdaptiveExtensionClass() {
+        //生成Adaptive代码code
         String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();
         ClassLoader classLoader = findClassLoader();
+        //利用dubbo的spi扩展机制获取compiler的设配类
         org.apache.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(org.apache.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
+        //编译生成的adaptive代码
         return compiler.compile(code, classLoader);
     }
 
