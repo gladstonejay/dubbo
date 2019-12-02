@@ -46,12 +46,15 @@ public class DubboRegistry extends FailbackRegistry {
     private final static Logger logger = LoggerFactory.getLogger(DubboRegistry.class);
 
     // Reconnecting detection cycle: 3 seconds (unit:millisecond)
+    // 重新连接周期：3秒
     private static final int RECONNECT_PERIOD_DEFAULT = 3 * 1000;
 
     // Scheduled executor service
+    // 任务调度器
     private final ScheduledExecutorService reconnectTimer = Executors.newScheduledThreadPool(1, new NamedThreadFactory("DubboRegistryReconnectTimer", true));
 
     // Reconnection timer, regular check connection is available. If unavailable, unlimited reconnection.
+    // 重新连接计时器，定期检查连接可用，如果不可用，则无限制重连
     private final ScheduledFuture<?> reconnectFuture;
 
     // The lock for client acquisition process, lock the creation process of the client instance to prevent repeated clients
@@ -130,6 +133,7 @@ public class DubboRegistry extends FailbackRegistry {
             logger.warn("Failed to cancel reconnect timer", t);
         }
         registryInvoker.destroy();
+        //优雅退出
         ExecutorUtil.gracefulShutdown(reconnectTimer, reconnectPeriod);
     }
 
