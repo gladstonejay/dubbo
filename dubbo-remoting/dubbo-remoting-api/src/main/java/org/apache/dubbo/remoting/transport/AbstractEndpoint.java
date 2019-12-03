@@ -67,6 +67,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
                     + url + ", cause: Channel closed. channel: " + getLocalAddress());
         }
         try {
+            // 判断重置的url中有没有携带timeout，有的话重置
             if (url.hasParameter(TIMEOUT_KEY)) {
                 int t = url.getParameter(TIMEOUT_KEY, 0);
                 if (t > 0) {
@@ -77,6 +78,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
             logger.error(t.getMessage(), t);
         }
         try {
+            // 判断重置的url中有没有携带connect.timeout，有的话重置
             if (url.hasParameter(Constants.CONNECT_TIMEOUT_KEY)) {
                 int t = url.getParameter(Constants.CONNECT_TIMEOUT_KEY, 0);
                 if (t > 0) {
@@ -87,6 +89,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
             logger.error(t.getMessage(), t);
         }
         try {
+            // 判断重置的url中有没有携带codec，有的话重置
             if (url.hasParameter(Constants.CODEC_KEY)) {
                 this.codec = getChannelCodec(url);
             }
